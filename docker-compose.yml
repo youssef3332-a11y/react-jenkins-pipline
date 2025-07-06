@@ -8,21 +8,34 @@ services:
       - jenkins-demo-network
     volumes:
       - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock
+    user: root
 
-  ubuntu:
+  build-agent:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: ubuntu-ssh-container
-    volumes:
-      - jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock
+      dockerfile: Dockerfile.agent
+    container_name: build-agent-container
+    ports:
+      - "2222:22"
     networks:
       - jenkins-demo-network
+    volumes:
+      - build_agent_home:/home/builduser
+      - /var/run/docker.sock:/var/run/docker.sock  # This one needs Docker access
+
+  prod-server:
+    build:
+      context: .
+      dockerfile: dockerfile.server
+    container_name: prod-server-container
     ports:
-      - "2222:22"  
-      - "8086:8084"  
+      - "2223:22"
+      - "3000:80"  # Example port for a web application
+    networks:
+      - jenkins-demo-network
+    volumes:
+      - prod_server_home:/home/produser
+      - /var/run/docker.sock:/var/run/docker.sock  # Optional, if you want to run containers there
 
 networks:
   jenkins-demo-network:
@@ -30,3 +43,5 @@ networks:
 
 volumes:
   jenkins_home:
+  build_agent_home:
+  prod_server_home:

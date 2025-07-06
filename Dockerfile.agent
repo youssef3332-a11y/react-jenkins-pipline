@@ -1,0 +1,30 @@
+# Use the official Ubuntu image as a base
+FROM ubuntu:latest
+
+# Install necessary packages, Docker, and OpenJDK 11
+RUN apt-get update && apt-get install -y \
+    sudo \
+    curl \
+    gnupg \
+    lsb-release \
+    openjdk-11-jdk \
+    && curl -fsSL https://get.docker.com -o get-docker.sh \
+    && sh get-docker.sh \
+    && rm get-docker.sh \
+    && usermod -aG docker root \
+    && apt-get clean
+
+# Install OpenSSH Server
+RUN apt-get install -y openssh-server \
+    && mkdir /var/run/sshd \
+    && echo 'root:password' | chpasswd
+
+# Create a new SSH configuration file to allow root login and password authentication
+RUN echo 'PermitRootLogin yes' > /etc/ssh/sshd_config.d/custom.conf \
+    && echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config.d/custom.conf
+
+# Expose SSH port
+EXPOSE 22
+
+# Start SSH service
+CMD ["/usr/sbin/sshd", "-D"]
